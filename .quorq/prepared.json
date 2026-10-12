@@ -1,0 +1,133 @@
+{
+  "architecture_npm": [
+    "axios",
+    "react-markdown"
+  ],
+  "key": {
+    "app_design_id": "77d0f2dd-6c95-4bf6-83ac-423ea5050d1c",
+    "app_design_version": 1,
+    "architecture_document_id": "84a95247-4cc7-4211-893e-323ce96a9c99",
+    "architecture_version": 7
+  },
+  "outcome": "prepared",
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "pydantic-settings",
+      "status": "unverified",
+      "version": ">=2.0"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "python-multipart",
+      "status": "unverified",
+      "version": ">=0.0.9"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "pypdf",
+      "status": "unverified",
+      "version": ">=4.0"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "python-docx",
+      "status": "unverified",
+      "version": ">=1.1"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "pytesseract",
+      "status": "unverified",
+      "version": ">=0.3.10"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "pdf2image",
+      "status": "unverified",
+      "version": ">=1.17"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "Pillow",
+      "status": "unverified",
+      "version": ">=10.0"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "google-generativeai",
+      "status": "unverified",
+      "version": ""
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "pgvector",
+      "status": "unverified",
+      "version": ">=0.3"
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "tenacity",
+      "status": "unverified",
+      "version": ">=8.2"
+    },
+    {
+      "ecosystem": "npm",
+      "error": "already provided by the scaffold",
+      "name": "tailwindcss",
+      "status": "skipped",
+      "version": ">=3.4"
+    },
+    {
+      "ecosystem": "npm",
+      "error": "already provided by the scaffold",
+      "name": "react-router-dom",
+      "status": "skipped",
+      "version": ">=6.22"
+    },
+    {
+      "ecosystem": "npm",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "react-markdown",
+      "status": "unverified",
+      "version": ">=9.0"
+    },
+    {
+      "ecosystem": "system",
+      "name": "tesseract-ocr",
+      "status": "image",
+      "version": ""
+    },
+    {
+      "ecosystem": "system",
+      "name": "poppler-utils",
+      "status": "image",
+      "version": ""
+    },
+    {
+      "ecosystem": "pypi",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "argon2-cffi",
+      "status": "unverified",
+      "version": ""
+    },
+    {
+      "ecosystem": "npm",
+      "error": "Install could not run: Could not start docker: [Errno 2] No such file or directory",
+      "name": "axios",
+      "status": "unverified",
+      "version": ""
+    }
+  ],
+  "prepared_by_run": "71e48a20-bea4-4c1c-bb58-6a3419dd435f"
+}

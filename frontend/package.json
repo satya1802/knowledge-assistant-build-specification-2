@@ -16,8 +16,10 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
+    "axios": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": ">=9.0",
     "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
