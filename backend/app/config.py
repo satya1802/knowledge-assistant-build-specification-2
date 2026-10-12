@@ -4,7 +4,7 @@ The architecture asks for exactly these knobs: the Gemini key (never logged
 -- it is wrapped in `SecretStr`), whether the session cookie's `Secure` flag
 is set (off for local http, on behind TLS), which Gemini models answer and
 embed with, the similarity threshold retrieval starts from, and an offline
-stub flag so ingestion and chat never need network access to Gemini in
+mode flag so ingestion and chat never need network access to Gemini in
 tests. The handful of these that the architecture also makes admin-editable
 at runtime (signup_enabled, fallback_enabled, answer_model, embedding_model,
 similarity_threshold) live here only as the default a freshly created
@@ -14,7 +14,7 @@ database starts with; `GET/PUT /api/admin/settings` reads and writes the
 
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,7 +29,13 @@ class Settings(BaseSettings):
 
     # Gemini.
     gemini_api_key: SecretStr | None = None
-    gemini_offline_stub: bool = False
+    # `OFFLINE_MODE` is the one env var that switches `get_provider()`
+    # between the deterministic local stub and the real Gemini API;
+    # `GEMINI_OFFLINE_STUB` is accepted too, for anyone's existing `.env`.
+    offline_mode: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("OFFLINE_MODE", "GEMINI_OFFLINE_STUB"),
+    )
     answer_model: str = "gemini-flash-lite-latest"
     embedding_model: str = "models/text-embedding-004"
     embedding_dimensions: int = 768

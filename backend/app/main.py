@@ -7,6 +7,7 @@ serves its OpenAPI document and passes its tests before a single handler is
 implemented.
 """
 
+import logging
 import os
 
 from fastapi import FastAPI
@@ -16,6 +17,7 @@ from app import models  # noqa: F401 -- imported so the tables register before c
 from app.config import get_settings
 from app.database import Base, engine, ensure_pgvector_extension
 from app.routers import all_routers
+from app.services.redaction import install_redaction_filter
 
 app = FastAPI(
     title="Knowledge Assistant · Build specification (2)",
@@ -57,3 +59,11 @@ async def health() -> dict[str, str]:
     other route lives in `app.routers` and is a stub until a ticket
     implements it."""
     return {"status": "ok"}
+
+
+# Logging init: a `RedactingFilter` on the root logger so the Gemini API key
+# -- whole or any 8+ character run of it -- can never reach a log record, a
+# request log, an error message or a stack trace (AC-128). Appended here
+# rather than threaded through every module's own `getLogger()` call.
+logging.basicConfig(level=logging.INFO)
+install_redaction_filter()
