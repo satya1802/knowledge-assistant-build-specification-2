@@ -27,3 +27,9 @@ python-docx>=1.1
 python-multipart>=0.0.9
 tenacity>=8.2
 # END QUORQ ARCHITECTURE PACKAGES
+
+# Password hashing for auth_service: bcrypt via passlib (US-001-1). bcrypt is
+# pinned below 4.1 because passlib 1.7.4's version probe raises on newer
+# bcrypt releases' changed internals.
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1

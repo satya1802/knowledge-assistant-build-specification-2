@@ -6,37 +6,13 @@ import * as UI from "@/lib/ui";
 import { Icons } from "@/lib/icons";
 import { brand } from "@/lib/brand";
 import { useNavigate } from "@/lib/navigate";
+import { useAuth } from "@/lib/auth";
 
 const { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Input, Label, Checkbox } = UI;
 const { Search, Users, FileText, Clock, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } = Icons;
 
 const SIGNUP_ENABLED = true;
-const EXISTING_ACCOUNT_COUNT = 12;
-const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
 const MIN_PASSWORD_LENGTH = 10;
-const GENERIC_ERROR = "Incorrect email or password.";
-
-const SEEDED_ACCOUNTS = [
-  {
-    email: "ada.okonkwo@northbridge.co.uk",
-    password: "Northbridge!24",
-    is_admin: true,
-    is_enabled: true,
-  },
-  {
-    email: "tom.whitfield@northbridge.co.uk",
-    password: "Harbour!2026",
-    is_admin: false,
-    is_enabled: true,
-  },
-  {
-    email: "priya.raman@northbridge.co.uk",
-    password: "Lantern!2026",
-    is_admin: false,
-    is_enabled: false,
-  },
-];
 
 const HIGHLIGHTS = [
   {
@@ -58,15 +34,17 @@ const HIGHLIGHTS = [
 
 export default function Screen() {
   const navigate = useNavigate();
+  const { login, signup } = useAuth();
   const [tab, setTab] = React.useState("signin");
 
   // Sign in form
-  const [email, setEmail] = React.useState("ada.okonkwo@northbridge.co.uk");
+  const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(true);
   const [signInErrors, setSignInErrors] = React.useState({});
   const [formNotice, setFormNotice] = React.useState(null);
+  const [signInBusy, setSignInBusy] = React.useState(false);
 
   // Create account form
   const [newEmail, setNewEmail] = React.useState("");
@@ -75,20 +53,10 @@ export default function Screen() {
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [signUpErrors, setSignUpErrors] = React.useState({});
   const [signUpNotice, setSignUpNotice] = React.useState(null);
-
-  // "server" state
-  const [createdAccounts, setCreatedAccounts] = React.useState([]);
-  const [attempts, setAttempts] = React.useState({});
-  const [locks, setLocks] = React.useState({});
-  const [session, setSession] = React.useState(null);
+  const [signUpBusy, setSignUpBusy] = React.useState(false);
 
   const signInTabRef = React.useRef(null);
   const signUpTabRef = React.useRef(null);
-
-  const allAccounts = React.useMemo(
-    () => [...SEEDED_ACCOUNTS, ...createdAccounts],
-    [createdAccounts]
-  );
 
   const focusRing = {
     ["--tw-ring-color"]: brand.primaryColor,
@@ -113,7 +81,7 @@ export default function Screen() {
     }
   }
 
-  function handleSignIn(event) {
+  async function handleSignIn(event) {
     event.preventDefault();
     const nextErrors = {};
     if (!email.trim()) nextErrors.email = "Enter your work email address.";
@@ -125,43 +93,19 @@ export default function Screen() {
       return;
     }
 
-    const key = email.trim().toLowerCase();
-    const now = Date.now();
-    const lockedUntil = locks[key];
-
-    if (lockedUntil && lockedUntil > now) {
-      setFormNotice({
-        kind: "locked",
-        minutes: Math.max(1, Math.ceil((lockedUntil - now) / 60000)),
-      });
-      return;
-    }
-
-    const account = allAccounts.find((a) => a.email === key);
-    const success = Boolean(account && account.is_enabled && account.password === password);
-
-    if (success) {
-      setAttempts((prev) => ({ ...prev, [key]: [] }));
-      setLocks((prev) => ({ ...prev, [key]: 0 }));
-      setFormNotice(null);
-      setSession({ email: account.email, is_admin: account.is_admin, remember });
+    setFormNotice(null);
+    setSignInBusy(true);
+    try {
+      await login(email.trim().toLowerCase(), password);
       navigate("chat");
-      return;
-    }
-
-    const recent = (attempts[key] || []).filter((t) => now - t < LOCKOUT_WINDOW_MS);
-    const updated = [...recent, now];
-    setAttempts((prev) => ({ ...prev, [key]: updated }));
-
-    if (updated.length >= MAX_ATTEMPTS) {
-      setLocks((prev) => ({ ...prev, [key]: now + LOCKOUT_WINDOW_MS }));
-      setFormNotice({ kind: "locked", minutes: 15 });
-    } else {
-      setFormNotice({ kind: "generic", remaining: MAX_ATTEMPTS - updated.length });
+    } catch (err) {
+      setFormNotice({ kind: "error", message: err && err.message ? err.message : "Sign in failed." });
+    } finally {
+      setSignInBusy(false);
     }
   }
 
-  function handleSignUp(event) {
+  async function handleSignUp(event) {
     event.preventDefault();
     const nextErrors = {};
     if (!newEmail.trim()) nextErrors.email = "Enter your work email address.";
@@ -177,57 +121,22 @@ export default function Screen() {
       return;
     }
 
-    const key = newEmail.trim().toLowerCase();
-    if (allAccounts.some((a) => a.email === key)) {
-      setSignUpNotice({ kind: "exists" });
-      return;
-    }
-
-    const account = { email: key, password: newPassword, is_admin: false, is_enabled: true };
-    setCreatedAccounts((prev) => [...prev, account]);
     setSignUpNotice(null);
-    setSession({ email: key, is_admin: false, remember: true, created: true });
-    navigate("chat");
+    setSignUpBusy(true);
+    try {
+      await signup(newEmail.trim().toLowerCase(), newPassword);
+      navigate("chat");
+    } catch (err) {
+      setSignUpNotice({ kind: "error", message: err && err.message ? err.message : "Account creation failed." });
+    } finally {
+      setSignUpBusy(false);
+    }
   }
 
   const checkboxChange = (setter) => (event) => {
     const value = typeof event === "boolean" ? event : event && event.target ? event.target.checked : undefined;
     setter((prev) => (value === undefined ? !prev : Boolean(value)));
   };
-
-  if (session) {
-    return (
-      <div className="mx-auto w-full max-w-xl px-4 py-16">
-        <UI.Card>
-          <UI.CardHeader>
-            <div
-              className="mb-3 flex h-10 w-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: brand.accentColor }}
-            >
-              <Icons.CheckCircle className="h-5 w-5 text-white" aria-hidden="true" />
-            </div>
-            <UI.CardTitle>
-              <h1 className="text-xl font-semibold" style={{ color: brand.primaryColor }}>
-                {session.created ? "Account created" : "Signed in"}
-              </h1>
-            </UI.CardTitle>
-            <UI.CardDescription>
-              A server-side session was created for {session.email} and an HTTP-only cookie was set.
-            </UI.CardDescription>
-          </UI.CardHeader>
-          <UI.CardFooter>
-            <UI.Button
-              type="button"
-              onClick={() => navigate("chat")}
-              style={{ backgroundColor: brand.primaryColor, color: "#FFFFFF" }}
-            >
-              Continue to Chat
-            </UI.Button>
-          </UI.CardFooter>
-        </UI.Card>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-14">
@@ -283,28 +192,7 @@ export default function Screen() {
 
           <div className="mt-8 h-px w-full bg-white/15" />
 
-          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-white/70">
-            Pilot environment
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-white/70">
-            This instance is seeded with pilot accounts. Use them to try the sign-in rules.
-          </p>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div className="rounded-lg bg-white/10 p-3" style={{ borderRadius: brand.radius }}>
-              <dt className="font-medium text-white">Admin account</dt>
-              <dd className="mt-1 break-words font-mono text-[13px] text-white/80">
-                ada.okonkwo@northbridge.co.uk · Northbridge!24
-              </dd>
-            </div>
-            <div className="rounded-lg bg-white/10 p-3" style={{ borderRadius: brand.radius }}>
-              <dt className="font-medium text-white">Disabled account</dt>
-              <dd className="mt-1 break-words font-mono text-[13px] text-white/80">
-                priya.raman@northbridge.co.uk · Lantern!2026
-              </dd>
-            </div>
-          </dl>
-
-          <p className="mt-6 text-sm text-white/70">
+          <p className="mt-8 text-sm text-white/70">
             New here?{" "}
             <button
               type="button"
@@ -403,38 +291,19 @@ export default function Screen() {
                           className="mt-5 flex gap-3 rounded-lg border p-4"
                           style={{
                             borderRadius: brand.radius,
-                            borderColor: formNotice.kind === "locked" ? "#B45309" : "#B42318",
-                            backgroundColor: formNotice.kind === "locked" ? "#FEF6E7" : "#FEF3F2",
+                            borderColor: "#B42318",
+                            backgroundColor: "#FEF3F2",
                           }}
                         >
                           <Icons.AlertCircle
                             className="mt-0.5 h-5 w-5 shrink-0"
-                            style={{ color: formNotice.kind === "locked" ? "#8A5200" : "#8F1D16" }}
+                            style={{ color: "#8F1D16" }}
                             aria-hidden="true"
                           />
                           <div className="text-sm">
-                            {formNotice.kind === "locked" ? (
-                              <>
-                                <p className="font-semibold" style={{ color: "#6B3F00" }}>
-                                  Sign-in temporarily locked
-                                </p>
-                                <p className="mt-1 leading-relaxed" style={{ color: "#6B3F00" }}>
-                                  After 5 failed attempts in 15 minutes this email is locked. Try again in{" "}
-                                  {formNotice.minutes} minutes, or ask an administrator to reset your password.
-                                </p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="font-semibold" style={{ color: "#7A1611" }}>
-                                  {GENERIC_ERROR}
-                                </p>
-                                <p className="mt-1 leading-relaxed" style={{ color: "#7A1611" }}>
-                                  {formNotice.remaining === 1
-                                    ? "1 attempt remaining before this email is locked for 15 minutes."
-                                    : `${formNotice.remaining} attempts remaining before this email is locked for 15 minutes.`}
-                                </p>
-                              </>
-                            )}
+                            <p className="font-semibold" style={{ color: "#7A1611" }}>
+                              {formNotice.message}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -505,10 +374,11 @@ export default function Screen() {
 
                       <UI.Button
                         type="submit"
+                        disabled={signInBusy}
                         className="mt-7 w-full justify-center"
                         style={{ backgroundColor: brand.primaryColor, color: "#FFFFFF" }}
                       >
-                        Sign in
+                        {signInBusy ? "Signing in…" : "Sign in"}
                       </UI.Button>
 
                       <p className="mt-5 text-sm leading-relaxed" style={{ color: brand.neutralColor }}>
@@ -533,11 +403,10 @@ export default function Screen() {
                           Create your account
                         </h3>
                         <p className="mt-2 text-sm leading-relaxed" style={{ color: brand.neutralColor }}>
-                          Self-service sign-up is switched on. {EXISTING_ACCOUNT_COUNT} accounts already exist,
-                          so this will be created as an ordinary user account.
+                          Self-service sign-up is switched on. New accounts are created as ordinary users.
                         </p>
 
-                        {signUpNotice && signUpNotice.kind === "exists" && (
+                        {signUpNotice && (
                           <div
                             role="alert"
                             className="mt-5 flex gap-3 rounded-lg border p-4"
@@ -553,7 +422,7 @@ export default function Screen() {
                               aria-hidden="true"
                             />
                             <div className="text-sm" style={{ color: "#7A1611" }}>
-                              <p className="font-semibold">An account already exists for that email.</p>
+                              <p className="font-semibold">{signUpNotice.message}</p>
                               <p className="mt-1">
                                 <button
                                   type="button"
@@ -653,10 +522,11 @@ export default function Screen() {
 
                         <UI.Button
                           type="submit"
+                          disabled={signUpBusy}
                           className="mt-7 w-full justify-center"
                           style={{ backgroundColor: brand.primaryColor, color: "#FFFFFF" }}
                         >
-                          Create account and sign in
+                          {signUpBusy ? "Creating account…" : "Create account and sign in"}
                         </UI.Button>
                       </form>
                     )}

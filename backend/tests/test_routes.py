@@ -39,11 +39,11 @@ def test_every_spec_endpoint_is_registered() -> None:
 
 
 def test_a_stub_route_responds_with_the_placeholder_shape() -> None:
-    response = client.post(
-        "/api/auth/login", json={"email": "a@example.com", "password": "x"}
-    )
+    # /api/auth/login is implemented (US-001-1); /api/me/theme is still a
+    # scaffolded stub and stands in for "not implemented yet" here instead.
+    response = client.get("/api/me/theme")
 
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "not_implemented"
-    assert body["endpoint"] == "POST /api/auth/login"
+    assert body["endpoint"] == "GET /api/me/theme"

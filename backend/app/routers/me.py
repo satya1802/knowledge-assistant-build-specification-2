@@ -1,18 +1,21 @@
 """The signed-in user's own profile: `GET /api/me`, password and theme.
 
-Stubs only -- see `app.routers.auth` for why.
+`GET /api/me` is implemented behind the session dependency; password change
+and theme are stubs -- see `app.routers.auth` for why.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.schemas import ChangePasswordRequest, StubResponse, ThemeRequest
+from app.deps import get_current_user
+from app.models import User
+from app.schemas import ChangePasswordRequest, StubResponse, ThemeRequest, UserOut
 
 router = APIRouter(tags=["me"])
 
 
-@router.get("/api/me", response_model=StubResponse)
-async def get_me() -> StubResponse:
-    return StubResponse(endpoint="GET /api/me")
+@router.get("/api/me", response_model=UserOut)
+async def get_me(user: User = Depends(get_current_user)) -> UserOut:
+    return UserOut.model_validate(user)
 
 
 @router.post("/api/me/password", response_model=StubResponse)
